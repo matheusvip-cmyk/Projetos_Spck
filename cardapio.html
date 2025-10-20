@@ -1,19 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head><!DOCTYPE html>
-<html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cardápio Online</title>
-    <link rel="stylesheet" href="cardapio.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, black, darkred);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background-color: rgba(20, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .menu-img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+
+        .menu-item label {
+            flex-grow: 1;
+        }
+
+        .menu-item input[type="number"] {
+            width: 60px;
+            padding: 4px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, darkred, black);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, black, darkred);
+        }
+
+        #troco-group {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Cardápio</h1>
         <form id="orderForm">
+            <div class="form-group">
+                <label for="nomeCliente">Nome do Cliente:</label>
+                <input type="text" id="nomeCliente" name="nomeCliente" required />
+            </div>
+
             <div class="menu-item">
-                <img src="./cheesy-pepperoni-pizza.jpg" alt="Pizza" class="menu-img" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg" alt="Pizza" class="menu-img" />
                 <label>
                     <input type="checkbox" name="item" value="Pizza" data-price="40" />
                     Pizza - R$40,00
@@ -21,7 +108,7 @@
                 <input type="number" name="quantityPizza" min="0" value="0" />
             </div>
             <div class="menu-item">
-                <img src="../FORMATO-DE-BLOG-8.png" alt="Hambúrguer" class="menu-img" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/RedDot_Burger.jpg" alt="Hambúrguer" class="menu-img" />
                 <label>
                     <input type="checkbox" name="item" value="Hambúrguer" data-price="30" />
                     Hambúrguer - R$30,00
@@ -29,7 +116,7 @@
                 <input type="number" name="quantityHamburguer" min="0" value="0" />
             </div>
             <div class="menu-item">
-                <img src="../Design-sem-nome-768x768.png" alt="Refrigerante" class="menu-img" />
+                <img src="/fotos.png/Design-sem-nome-768x768.png" alt="Refrigerante" class="menu-img" />
                 <label>
                     <input type="checkbox" name="item" value="Refrigerante" data-price="10" />
                     Refrigerante - R$10,00
@@ -38,7 +125,7 @@
             </div>
 
             <div class="form-group">
-                <label for="bairro">Endereço:</label>
+                <label for="bairro">Bairro:</label>
                 <input type="text" id="bairro" name="bairro" required />
             </div>
 
@@ -62,7 +149,7 @@
                 </select>
             </div>
 
-            <div class="form-group" id="troco-group" style="display:none;">
+            <div class="form-group" id="troco-group">
                 <label for="troco">Quer troco? Se sim, para quanto?</label>
                 <input type="text" id="troco" name="troco" placeholder="Ex: R$50,00" />
             </div>
@@ -71,6 +158,110 @@
         </form>
     </div>
 
-    <script src="cardapio.js"></script>
+    <script>
+        const paymentSelect = document.getElementById('payment');
+        const trocoGroup = document.getElementById('troco-group');
+        const trocoInput = document.getElementById('troco');
+
+        paymentSelect.addEventListener('change', () => {
+            if (paymentSelect.value === 'Dinheiro') {
+                trocoGroup.style.display = 'block';
+                trocoInput.setAttribute('required', 'required');
+            } else {
+                trocoGroup.style.display = 'none';
+                trocoInput.removeAttribute('required');
+                trocoInput.value = '';
+            }
+        });
+
+        document.getElementById('orderForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const items = [
+                { checkboxName: 'Pizza', quantityName: 'quantityPizza' },
+                { checkboxName: 'Hambúrguer', quantityName: 'quantityHamburguer' },
+                { checkboxName: 'Refrigerante', quantityName: 'quantityRefri' },
+            ];
+
+            const selectedItems = [];
+            let totalPrice = 0;
+            const deliveryFee = 10; // taxa de entrega fixa
+
+            items.forEach(item => {
+                const checkbox = document.querySelector(`input[name="item"][value="${item.checkboxName}"]`);
+                const quantityInput = document.querySelector(`input[name="${item.quantityName}"]`);
+
+                if (checkbox.checked && quantityInput.value > 0) {
+                    const quantity = parseInt(quantityInput.value);
+                    const price = parseFloat(checkbox.dataset.price);
+                    selectedItems.push({
+                        name: item.checkboxName,
+                        quantity,
+                        price,
+                        subtotal: price * quantity,
+                    });
+                    totalPrice += price * quantity;
+                }
+            });
+
+            if (selectedItems.length === 0) {
+                alert('Por favor, selecione pelo menos um item e quantidade.');
+                return;
+            }
+
+            const nomeCliente = document.getElementById('nomeCliente').value.trim();
+            if (!nomeCliente) {
+                alert('Por favor, informe o nome do cliente.');
+                return;
+            }
+
+            const bairro = document.getElementById('bairro').value.trim();
+            const numero = document.getElementById('numero').value.trim();
+            const complemento = document.getElementById('complemento').value.trim();
+
+            if (!bairro || !numero || !complemento) {
+                alert('Por favor, preencha bairro, número e complemento.');
+                return;
+            }
+
+            const payment = paymentSelect.value;
+            if (!payment) {
+                alert('Por favor, selecione a forma de pagamento.');
+                return;
+            }
+
+            const troco = trocoInput.value.trim();
+            if (payment === 'Dinheiro' && !troco) {
+                alert('Por favor, informe para quanto deseja troco.');
+                return;
+            }
+
+            const totalWithDelivery = totalPrice + deliveryFee;
+
+            let message = `Pedido feito pelo cliente: ${nomeCliente}
+`;
+            selectedItems.forEach(item => {
+                message += `${item.quantity}x ${item.name} - R$${item.subtotal.toFixed(2)}
+`;
+            });
+            message += `Taxa de entrega: R$${deliveryFee.toFixed(2)}
+`;
+            message += `Total: R$${totalWithDelivery.toFixed(2)}
+`;
+            message += `Endereço: Bairro ${bairro}, Número ${numero}, Complemento ${complemento}
+`;
+            message += `Forma de pagamento: ${payment}
+`;
+            if (payment === 'Dinheiro') {
+                message += `Troco para: ${troco}
+`;
+            }
+
+            const encodedMessage = encodeURIComponent(message);
+            const phoneNumber = '5511999999999'; // substitua pelo número real
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        });
+    </script>
 </body>
 </html>
